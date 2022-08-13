@@ -1,4 +1,4 @@
-# OPENGLTUTORIAL
+# Practice in OPENGL 
 Me trying to learn graphics programming.
 
 Thats.. about it...
