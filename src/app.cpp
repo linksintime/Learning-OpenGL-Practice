@@ -42,6 +42,7 @@ int main(){
         return -1;
     }
     glfwMakeContextCurrent(window);
+
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     // GLAD utils error failsafe opens all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
@@ -112,7 +113,7 @@ int main(){
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Rendering Loop; EACH ITERATION IS A FRAME!
     while (!glfwWindowShouldClose(window)){ 
