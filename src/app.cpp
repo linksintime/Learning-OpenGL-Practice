@@ -20,18 +20,13 @@ const char *vertexShaderSource = "#version 330 core\n"
     "}\0";
 const char *fragmentShaderSource = "#version 330 core\n"
     "out vec4 FragColor;\n"
-    "void main();\n"
+    "void main()\n"
     "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\0"; 
+    "   FragColor = vec4(255.0f, 0.0f, 0.0f, 1.0f);\n"
+    "}\n\0";
 
 int main(){
 
-    float vertices[] = {
-       -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f
-    };
 
     glfwInit(); // Instantiate glfw
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -69,6 +64,7 @@ int main(){
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
+
     // Fragment shaders
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
@@ -81,99 +77,62 @@ int main(){
     }
 
     // Link shaders together
-
-    // Creating and assigning ID's to vertex buffer objects (VBO) that store memory to the GPU
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    
-    //      Binding the buffer target
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Creating and assigning ID's to the vertex shader objects    // fragment shader
-    // Creating and assigning ID's to the vertex shader objects
-    // Creating fragment shaders and assigning id to it same deal with the vertexShaders
-
-    // Shader Program; Combines multiple shaders together
     unsigned int shaderProgram = glCreateProgram();
-
-    // Attach shader program to previously compiled shaders and then link with glLinkProgram
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
-    // Check if compilation of shader program is successful
+    // Check for linking errors
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if(!success){
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
     }
-
-    // The result of the program creates a program object that we can activate by calling glUseProgram with shaderProgram as its argument
-    glUseProgram(shaderProgram);
-
-    // Delete shader objects that are in the program since they're already linked and so we don't need them anymore
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    /*
-    Right now we sent the input vertex data to the GPU and instructed the GPU how it should process the vertex data within a vertex and fragment shader. 
-    We're almost there, but not quite yet. 
-    OpenGL does not yet know how it should interpret the vertex data in memory and how it should connect the vertex data to the vertex shader's attributes. 
-    We'll be nice and tell OpenGL how to do that. 
-    */
+    // Creating and assigning ID's to vertex buffer objects (VBO) that store memory to the GPU
+    float vertices[] = {
+       -0.5f, -0.5f, 0.0f, // left
+        0.5f, -0.5f, 0.0f, // right
+        0.0f, 0.5f, 0.0f   // top
+    };
+
+    unsigned int VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    // Bind the vertex array object first, then bind and set vertex buffer(s), and then configure vertex attribute(s)
+    glBindVertexArray(VAO);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    /*
+    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    ***glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);***
-
-   -The first parameter specifies which vertex attribute we want to configure. 
-        Remember that we specified the location of the position vertex attribute in the vertex shader with layout (location = 0).
-        This sets the location of the vertex attribute to 0 and since we want to pass data to this vertex attribute, we pass in 0.
-   -The next argument specifies the size of the vertex attribute. 
-        The vertex attribute is a vec3 so it is composed of 3 values.
-   -The third argument specifies the type of the data which is GL_FLOAT (a vec* in GLSL consists of floating point values).
-   -The next argument specifies if we want the data to be normalized. 
-        If we're inputting integer data types (int, byte) and we've set this to GL_TRUE, the integer data is normalized to 0 (or -1 for signed data) and 1 when converted to float. 
-        This is not relevant for us so we'll leave this at GL_FALSE.
-   -The fifth argument is known as the stride and tells us the space between consecutive vertex attributes. 
-        Since the next set of position data is located exactly 3 times the size of a float away we specify that value as the stride.
-        Note that since we know that the array is tightly packed (there is no space between the next vertex attribute value) we could've also specified the stride as 0 to let OpenGL determine the stride (this only works when values are tightly packed).
-        Whenever we have more vertex attributes we have to carefully define the spacing between each vertex attribute but we'll get to see more examples of that later on.
-   -The last parameter is of type void* and thus requires that weird cast. 
-        This is the offset of where the position data begins in the buffer.
-        Since the position data is at the start of the data array this value is just 0. 
-        We will explore this parameter in more detail later on...
-    */
-
-    // Similar to that of a VBO just bind create and bind the object to an ID like so
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-
-    // 1. bind the Vertex Array Object
-    glBindVertexArray(VAO);
-    // 2. Copy our vertices array in a buffer for OpenGl to use
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // 3. Then set our vertex attributes pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Rendering Loop; EACH ITERATION IS A FRAME!
     while (!glfwWindowShouldClose(window)){ 
+        
+        // Input
         processInput(window);
 
-        // Drawing code in the render loop FINALLY!
+        // Render
+
+        glClearColor(255.0f/255.0f, 154.0f/255.0f, 154.0f/255.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Drawing the triangle
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
-        glClearColor(255.0f/255.0f, 154.0f/255.0f, 154.0f/255.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
-        glfwPollEvents();
         glfwSwapBuffers(window);
+        glfwPollEvents();
     }
     glfwTerminate();
     return 0;
